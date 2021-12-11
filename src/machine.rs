@@ -15,3 +15,52 @@ pub fn machine(instructions: Vec<u32>) {
 
 }
 
+
+
+/*pub fn sign_extension(mut x: u32, num_bits: u32) -> u32{
+    if ((x >> (num_bits - 1)) & 1) == 1{
+        x |= 0x7FFFFFFF << num_bits;
+    }
+    return x;
+}*/
+
+pub fn conditional_move(mut a: u32, mut b: u32, mut c: u32) -> u32{
+    if c != 0 {
+        return b;
+    }else{
+        return a;
+    }
+}
+
+pub fn segmented_load(){
+    todo!();
+
+}
+
+pub fn addition(mut b: u32, mut c: u32) -> u32{
+    let base = 2;
+    //not sure if pow function fucks this up 
+    let base = u32::pow(base, 32);
+    return (b + c) % base;    
+}
+
+pub fn multiplication(mut b: u32, mut c: u32) -> u32{
+    let base = 2;
+    //not sure if pow function fucks this up 
+    let base = u32::pow(base, 32);
+    return (b * c) % base;
+}
+
+pub fn division(mut b: u32, mut c: u32) -> u32{
+    //integer division
+    return b / c;
+}
+
+pub fn nand(mut b: u32, mut c: u32) -> u32{
+    return !(b ^ c);
+}
+
+pub fn halt(){
+    //not sure about this one.
+    todo!();
+}
