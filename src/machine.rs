@@ -32,8 +32,8 @@ pub fn conditional_move(mut a: u32, mut b: u32, mut c: u32) -> u32{
     }
 }
 
-pub fn segmented_load(){
-    todo!();
+pub fn segmented_load(id: u32, offset: u32){
+    todo!();     
 
 }
 
@@ -60,7 +60,17 @@ pub fn nand(mut b: u32, mut c: u32) -> u32{
     return !(b ^ c);
 }
 
-pub fn halt(){
-    //not sure about this one.
-    todo!();
+
+pub fn output(mut c: u32){
+    if c <= 255{
+        println!("{}",c);
+    }
+}
+
+pub fn input(){
+    todo!();    
+}
+
+pub fn load_value(value: u32){
+    return value;
 }
