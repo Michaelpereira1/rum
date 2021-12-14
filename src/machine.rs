@@ -40,7 +40,6 @@ pub fn machine(instructions: Vec<u32>) {
         last_identifier: 0,
         counter: 0,
     };
-
     machine.memory.insert(0, instructions);
 
     loop {
@@ -105,25 +104,22 @@ pub fn machine(instructions: Vec<u32>) {
                 if machine.identifiers.is_empty() {
                     machine.last_identifier += 1;
                     machine.registers[b as usize ] = machine.last_identifier;
-                    machine.memory.entry(machine.registers[b as usize]).or_insert(vec![word_count; 0]);
+                    machine.memory.entry(machine.registers[b as usize]).or_insert(vec![0; word_count as usize]);
                 } else {
                     machine.registers[b as usize] = machine.identifiers.pop().unwrap();
-                    machine.memory.entry(machine.registers[b as usize]).or_insert(vec![word_count; 0]);
+                    machine.memory.entry(machine.registers[b as usize]).or_insert(vec![0; word_count as usize]);
+                    
                 }
                 
             },
             o if o == Opcode::UnmapSegment as u32 => {
                 let c = get(&RC, inst);
-                let a = get(&RA, inst);
-                let b = get(&RB, inst);
                 let key = machine.registers[c as usize];
                 machine.identifiers.push(key);
                 machine.memory.remove(&key);
             },
             o if o == Opcode::Output as u32 => {
                 let c = get(&RC, inst);
-                let a = get(&RA, inst);
-                let b = get(&RB, inst);
                 output(machine.registers[c as usize]);
                 
             },
@@ -178,46 +174,36 @@ enum Opcode {
 }
 
 
-
-/*pub fn sign_extension(mut x: u32, num_bits: u32) -> u32{
-    if ((x >> (num_bits - 1)) & 1) == 1{
-        x |= 0x7FFFFFFF << num_bits;
-    }
-    return x;
-}*/
-
 pub fn conditional_move(mut a: u32, b: u32, c: u32) -> u32{
     if c != 0 {
         a = b
     }
 
     return a;
-
-    
 }
 
 pub fn addition(b: u32, c: u32) -> u32{
     let base = 2;
     let base = usize::pow(base, 32);
+
     let answer = (b as usize + c as usize) % base;
     return answer as u32;    
 }
 
 pub fn multiplication(b: u32, c: u32) -> u32{
     let base = 2;
-    //not sure if pow function fucks this up 
     let base = usize::pow(base, 32);
     let answer = (b as usize * c as usize) % base;
     return answer as u32;
 }
 
 pub fn division(b: u32, c: u32) -> u32{
-    //integer division
-    return b / c;
+    let answer = b / c;
+    return answer;
 }
 
 pub fn nand(b: u32, c: u32) -> u32{
-    return !(b ^ c);
+    return !(b & c);
 }
 
 
@@ -226,13 +212,4 @@ pub fn output(c: u32){
         print!("{}", c as u8 as char);
     }
 }
-
-pub fn load_program(seg_id: u32, mut memory:HashMap<u32, &Vec<u32>>){
-    if seg_id == 0{
-        return;
-    }
-    let copied_segment = memory.get(&seg_id).unwrap();
-    let new_segment = memory.insert(0, copied_segment);    
-}
-
 }
