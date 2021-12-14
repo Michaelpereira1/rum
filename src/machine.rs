@@ -28,6 +28,7 @@ pub struct Machine {
     registers: [u32; 8],
     memory: HashMap<u32, Vec<u32>>,
     identifiers: Vec<u32>,
+    last_identifier: u32,
     counter: u32,
 }
 
@@ -36,6 +37,7 @@ pub fn machine(instructions: Vec<u32>) {
         registers: [0,0,0,0,0,0,0,0],
         memory: HashMap::new(),
         identifiers: vec![],
+        last_identifier: 0,
         counter: 0,
     };
 
@@ -43,6 +45,11 @@ pub fn machine(instructions: Vec<u32>) {
 
     loop {
         let inst = machine.memory.get(&0).unwrap()[machine.counter as usize];
+        if machine.counter as usize > machine.memory.get(&0).unwrap().len() {
+            exit(0);
+        }
+        machine.counter += 1;
+
         match get(&OP, inst) {
             o if o == Opcode::Cmov as u32 => {
                 let c = get(&RC, inst);
@@ -95,13 +102,24 @@ pub fn machine(instructions: Vec<u32>) {
                 let c = get(&RC, inst);
                 let a = get(&RA, inst);
                 let b = get(&RB, inst);
+                let word_count = machine.registers[c as usize];
+                if machine.identifiers.is_empty() {
+                    machine.registers[b as usize ] = machine.last_identifier + 1;
+                    machine.last_identifier += 1;
+                    machine.memory.entry(machine.registers[b as usize]).or_insert(vec![word_count; 0]);
+                } else {
+                    machine.registers[b as usize] = machine.identifiers.pop().unwrap();
+                    machine.memory.entry(machine.registers[b as usize]).or_insert(vec![word_count; 0]);
+                }
                 
             },
             o if o == Opcode::UnmapSegment as u32 => {
                 let c = get(&RC, inst);
                 let a = get(&RA, inst);
                 let b = get(&RB, inst);
-                
+                let key = machine.registers[c as usize];
+                machine.identifiers.push(key);
+                machine.memory.remove(&key);
             },
             o if o == Opcode::Output as u32 => {
                 let c = get(&RC, inst);
@@ -133,8 +151,6 @@ pub fn machine(instructions: Vec<u32>) {
                 format!(".data 0x{:x}", inst);
             }
         }
-        machine.counter += 1;
-        
 }
 #[derive(Debug, PartialEq, Copy, Clone)]
 enum Opcode {
