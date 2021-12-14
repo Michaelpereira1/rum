@@ -1,18 +1,157 @@
-use std::{env, array, collections::HashMap};
-use crate::rumdis;
+use std::{env, array, collections::HashMap, process::exit};
+use crate::{machine};
+
+type Umi = u32;
+pub struct Field {
+    width: u32,
+    lsb: u32,
+}
+
+static RA: Field = Field {width: 3, lsb: 6};
+static RB: Field = Field {width: 3, lsb: 3};
+static RC: Field = Field {width: 3, lsb: 0};
+static RL: Field = Field {width: 3, lsb: 25};
+static VL: Field = Field {width: 25, lsb: 0};
+static OP: Field = Field {width: 4, lsb: 28};
+
+fn mask(bits:u32) -> u32 { (1 << bits) - 1}
+
+pub fn get(field: &Field, instruction: Umi) -> u32 {
+    (instruction >> field.lsb) & mask(field.width)
+}
+
+pub fn op(instruction: Umi) -> u32 {
+    (instruction >> OP.lsb) & mask(OP.width)
+}
+
+pub struct Machine {
+    registers: [u32; 8],
+    memory: HashMap<u32, Vec<u32>>,
+    identifiers: Vec<u32>,
+    counter: u32,
+}
 
 pub fn machine(instructions: Vec<u32>) {
-    let mut registers: [u32; 8] = [0,0,0,0,0,0,0,0];
-    let mut memory: HashMap<u32, Vec<u32>> = HashMap::new();
-    let mut identifiers: Vec<u32> = vec![];
-    let mut counter:u32 = 0;
-    memory.insert(0, instructions);
+    let mut machine = Machine {
+        registers: [0,0,0,0,0,0,0,0],
+        memory: HashMap::new(),
+        identifiers: vec![],
+        counter: 0,
+    };
+
+    machine.memory.insert(0, instructions);
 
     loop {
-        rumdis::disassemble(memory.get(&0).unwrap()[counter as usize]);
-    }
-
-
+        let inst = machine.memory.get(&0).unwrap()[machine.counter as usize];
+        match get(&OP, inst) {
+            o if o == Opcode::Cmov as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                machine.registers[a as usize] = conditional_move(machine.registers[a as usize], machine.registers[b as usize], machine.registers[c as usize]);
+                
+            },
+            o if o == Opcode::Load as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+            },
+            o if o == Opcode::Store as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                
+            },
+            o if o == Opcode::Add as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                machine.registers[a as usize] = addition(machine.registers[b as usize], machine.registers[c as usize]);
+            },
+            o if o == Opcode::Mul as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                machine.registers[a as usize] = multiplication(machine.registers[b as usize], machine.registers[c as usize]);
+            },
+            o if o == Opcode::Div as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                machine.registers[a as usize] = division(machine.registers[b as usize], machine.registers[c as usize]);
+                
+            },
+            // possible enhancement: if RB == RC, complement RC
+            o if o == Opcode::Nand as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                machine.registers[a as usize] = nand(machine.registers[b as usize], machine.registers[c as usize]);
+            },
+            o if o == Opcode::Halt as u32 => {
+                exit(0);
+            },
+            o if o == Opcode::MapSegment as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                
+            },
+            o if o == Opcode::UnmapSegment as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                
+            },
+            o if o == Opcode::Output as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                output(machine.registers[c as usize]);
+                
+            },
+            o if o == Opcode::Input as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                
+            },
+            o if o == Opcode::LoadProgram as u32 => {
+                let c = get(&RC, inst);
+                let a = get(&RA, inst);
+                let b = get(&RB, inst);
+                
+            },
+            o if o == Opcode::LoadValue as u32 => {
+            format!("r{} := {};", get(&RL, inst), get(&VL, inst));
+            let a = get(&RL, inst);
+            let value = get(&VL, inst);
+            
+            },
+        
+            _ => {
+                format!(".data 0x{:x}", inst);
+            }
+        }
+        machine.counter += 1;
+        
+}
+#[derive(Debug, PartialEq, Copy, Clone)]
+enum Opcode {
+    Cmov,
+    Load,
+    Store,
+    Add,
+    Mul,
+    Div,
+    Nand,
+    Halt,
+    MapSegment,
+    UnmapSegment,
+    Output,
+    Input,
+    LoadProgram,
+    LoadValue,
 }
 
 
@@ -24,10 +163,14 @@ pub fn machine(instructions: Vec<u32>) {
     return x;
 }*/
 
-pub fn conditional_move(mut a: u32, b: u32, c: u32){
+pub fn conditional_move(mut a: u32, b: u32, c: u32) -> u32{
     if c != 0 {
         a = b
     }
+
+    return a;
+
+    
 }
 
 pub fn segmented_load(seg_id: u32, offset: usize, memory:HashMap<u32, Vec<u32>>) -> u32{
@@ -87,6 +230,4 @@ pub fn load_value(value: u32) -> u32{
     return value;
 }
 
-
-
-
+}
