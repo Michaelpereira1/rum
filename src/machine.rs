@@ -45,11 +45,7 @@ pub fn machine(instructions: Vec<u32>) {
 
     loop {
         let inst = machine.memory.get(&0).unwrap()[machine.counter as usize];
-        if machine.counter as usize > machine.memory.get(&0).unwrap().len() {
-            exit(0);
-        }
         machine.counter += 1;
-
         match get(&OP, inst) {
             o if o == Opcode::Cmov as u32 => {
                 let c = get(&RC, inst);
@@ -69,7 +65,7 @@ pub fn machine(instructions: Vec<u32>) {
                 let c = get(&RC, inst);
                 let a = get(&RA, inst);
                 let b = get(&RB, inst);
-                machine.memory.get(&machine.registers[a as usize]).unwrap()[machine.registers[b as usize] as usize] = machine.registers[c as usize];
+                machine.memory.get_mut(&machine.registers[a as usize]).unwrap()[machine.registers[b as usize] as usize] = machine.registers[c as usize];
                 
             },
             o if o == Opcode::Add as u32 => {
@@ -107,8 +103,8 @@ pub fn machine(instructions: Vec<u32>) {
                 let b = get(&RB, inst);
                 let word_count = machine.registers[c as usize];
                 if machine.identifiers.is_empty() {
-                    machine.registers[b as usize ] = machine.last_identifier + 1;
                     machine.last_identifier += 1;
+                    machine.registers[b as usize ] = machine.last_identifier;
                     machine.memory.entry(machine.registers[b as usize]).or_insert(vec![word_count; 0]);
                 } else {
                     machine.registers[b as usize] = machine.identifiers.pop().unwrap();
@@ -202,15 +198,17 @@ pub fn conditional_move(mut a: u32, b: u32, c: u32) -> u32{
 
 pub fn addition(b: u32, c: u32) -> u32{
     let base = 2;
-    let base = u32::pow(base, 32);
-    return (b + c) % base;    
+    let base = usize::pow(base, 32);
+    let answer = (b as usize + c as usize) % base;
+    return answer as u32;    
 }
 
 pub fn multiplication(b: u32, c: u32) -> u32{
     let base = 2;
     //not sure if pow function fucks this up 
-    let base = u32::pow(base, 32);
-    return (b * c) % base;
+    let base = usize::pow(base, 32);
+    let answer = (b as usize * c as usize) % base;
+    return answer as u32;
 }
 
 pub fn division(b: u32, c: u32) -> u32{
