@@ -1,4 +1,4 @@
-use std::{env, array, collections::HashMap, process::exit};
+use std::{env, array, collections::HashMap, process::exit, io::{stdout, Write, stdin, Read}};
 use crate::{machine};
 
 type Umi = u32;
@@ -62,11 +62,14 @@ pub fn machine(instructions: Vec<u32>) {
                 let c = get(&RC, inst);
                 let a = get(&RA, inst);
                 let b = get(&RB, inst);
+                machine.registers[a as usize] = machine.memory.get(&machine.registers[b as usize]).unwrap()[machine.registers[c as usize]as usize];
+
             },
             o if o == Opcode::Store as u32 => {
                 let c = get(&RC, inst);
                 let a = get(&RA, inst);
                 let b = get(&RB, inst);
+                machine.memory.get(&machine.registers[a as usize]).unwrap()[machine.registers[b as usize] as usize] = machine.registers[c as usize];
                 
             },
             o if o == Opcode::Add as u32 => {
@@ -130,20 +133,28 @@ pub fn machine(instructions: Vec<u32>) {
             },
             o if o == Opcode::Input as u32 => {
                 let c = get(&RC, inst);
-                let a = get(&RA, inst);
-                let b = get(&RB, inst);
+                match stdin().bytes().next() {
+                    Some(value) => {
+                        machine.registers[c as usize] = value.unwrap() as u32;
+                    }
+                    None => machine.registers[c as usize]  = !0 as u32,
+                }
                 
             },
+
             o if o == Opcode::LoadProgram as u32 => {
                 let c = get(&RC, inst);
                 let a = get(&RA, inst);
                 let b = get(&RB, inst);
-                
+                let duplicate = machine.memory.get(&machine.registers[b as usize]).unwrap();
+                machine.memory.insert(0, duplicate.to_vec());
+                machine.counter = machine.registers[c as usize];
             },
+
             o if o == Opcode::LoadValue as u32 => {
-            format!("r{} := {};", get(&RL, inst), get(&VL, inst));
-            let a = get(&RL, inst);
-            let value = get(&VL, inst);
+                let a = get(&RL, inst);
+                let value = get(&VL, inst);
+                machine.registers[a as usize] = value;
             
             },
         
@@ -189,15 +200,6 @@ pub fn conditional_move(mut a: u32, b: u32, c: u32) -> u32{
     
 }
 
-pub fn segmented_load(seg_id: u32, offset: usize, memory:HashMap<u32, Vec<u32>>) -> u32{
-    return memory.get(&seg_id).unwrap()[offset];
-}
-
-pub fn segmented_store(a: u32, seg_id: u32, offset: usize, memory:HashMap<u32, Vec<u32>>){
-    let mut word = memory.get(&seg_id).unwrap()[offset];
-    word = a;
-}
-
 pub fn addition(b: u32, c: u32) -> u32{
     let base = 2;
     let base = u32::pow(base, 32);
@@ -220,18 +222,11 @@ pub fn nand(b: u32, c: u32) -> u32{
     return !(b ^ c);
 }
 
-pub fn map_segment(){
-
-}
 
 pub fn output(c: u32){
     if c <= 255{
-        println!("{}",c);
+        print!("{}", c as u8 as char);
     }
-}
-
-pub fn input(){
-    todo!();    
 }
 
 pub fn load_program(seg_id: u32, mut memory:HashMap<u32, &Vec<u32>>){
@@ -240,10 +235,6 @@ pub fn load_program(seg_id: u32, mut memory:HashMap<u32, &Vec<u32>>){
     }
     let copied_segment = memory.get(&seg_id).unwrap();
     let new_segment = memory.insert(0, copied_segment);    
-}
-
-pub fn load_value(value: u32) -> u32{
-    return value;
 }
 
 }
