@@ -24,44 +24,48 @@ pub fn machine(instructions: Vec<u32>) {
     return x;
 }*/
 
-pub fn conditional_move(mut a: u32, mut b: u32, mut c: u32) -> u32{
+pub fn conditional_move(mut a: u32, b: u32, c: u32){
     if c != 0 {
-        return b;
-    }else{
-        return a;
+        a = b
     }
 }
 
-pub fn segmented_load(id: u32, offset: u32){
-    todo!();     
-
+pub fn segmented_load(seg_id: u32, offset: usize, memory:HashMap<u32, Vec<u32>>) -> u32{
+    return memory.get(&seg_id).unwrap()[offset];
 }
 
-pub fn addition(mut b: u32, mut c: u32) -> u32{
+pub fn segmented_store(a: u32, seg_id: u32, offset: usize, memory:HashMap<u32, Vec<u32>>){
+    let mut word = memory.get(&seg_id).unwrap()[offset];
+    word = a;
+}
+
+pub fn addition(b: u32, c: u32) -> u32{
     let base = 2;
-    //not sure if pow function fucks this up 
     let base = u32::pow(base, 32);
     return (b + c) % base;    
 }
 
-pub fn multiplication(mut b: u32, mut c: u32) -> u32{
+pub fn multiplication(b: u32, c: u32) -> u32{
     let base = 2;
     //not sure if pow function fucks this up 
     let base = u32::pow(base, 32);
     return (b * c) % base;
 }
 
-pub fn division(mut b: u32, mut c: u32) -> u32{
+pub fn division(b: u32, c: u32) -> u32{
     //integer division
     return b / c;
 }
 
-pub fn nand(mut b: u32, mut c: u32) -> u32{
+pub fn nand(b: u32, c: u32) -> u32{
     return !(b ^ c);
 }
 
+pub fn map_segment(){
 
-pub fn output(mut c: u32){
+}
+
+pub fn output(c: u32){
     if c <= 255{
         println!("{}",c);
     }
@@ -71,6 +75,18 @@ pub fn input(){
     todo!();    
 }
 
-pub fn load_value(value: u32){
+pub fn load_program(seg_id: u32, mut memory:HashMap<u32, &Vec<u32>>){
+    if seg_id == 0{
+        return;
+    }
+    let copied_segment = memory.get(&seg_id).unwrap();
+    let new_segment = memory.insert(0, copied_segment);    
+}
+
+pub fn load_value(value: u32) -> u32{
     return value;
 }
+
+
+
+
