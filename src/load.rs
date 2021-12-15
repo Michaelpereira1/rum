@@ -1,3 +1,5 @@
+/*Loads the instruction set from either stdin or file.
+ */
 pub fn load(input: Option<&str>) -> Vec<u32> {
     let mut raw_reader: Box<dyn std::io::BufRead> = match input {
         None => Box::new(std::io::BufReader::new(std::io::stdin())),
