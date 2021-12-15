@@ -1,5 +1,5 @@
 use std::{collections::HashMap, process::exit, io::{stdout, Write, stdin, Read}};
-
+use std::time::Instant;
 type Umi = u32;
 //Used for the bit shifting operations to extract the opcode and register numbers from words
 pub struct Field {
@@ -44,6 +44,7 @@ pub struct Machine {
  A program counter that is used to point to the current instruction.
 */
 pub fn machine(instructions: Vec<u32>) {
+    let now = Instant::now();
     let mut machine = Machine {
         registers: [0,0,0,0,0,0,0,0],
         memory: HashMap::new(),
@@ -54,7 +55,7 @@ pub fn machine(instructions: Vec<u32>) {
     //Load the instruction set into the 0 segment within memory.
     machine.memory.insert(0, instructions);
 
-    
+    let mut counter = 0;
     //Machine execution, continues until Fail state, or program halt.
     loop {
         //Retrieve the current memory from memory segment 0 using the program counter.
@@ -130,6 +131,8 @@ pub fn machine(instructions: Vec<u32>) {
             },
             //Halt, exits the program.
             o if o == Opcode::Halt as u32 => {
+                let elapsed_time = now.elapsed();
+                println!("Running slow_function() took {} seconds.", elapsed_time.as_secs());
                 exit(0);
             },
             o if o == Opcode::MapSegment as u32 => {
